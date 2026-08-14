@@ -884,4 +884,4 @@ async function saveInvoice(root) {
 }
 
 /* ---------------------------------------------------------------------- */
-initAuth();
+function waitForGoogle() { if (window.google && google.accounts && google.accounts.oauth2) { initAuth(); } else { setTimeout(waitForGoogle, 50); } } waitForGoogle();
