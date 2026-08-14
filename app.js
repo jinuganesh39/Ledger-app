@@ -65,15 +65,22 @@ function initAuth() {
     $("#btn-signin").classList.add("opacity-50","cursor-not-allowed");
     return;
   }
-  state.tokenClient = google.accounts.oauth2.initTokenClient({
-    client_id: CONFIG.CLIENT_ID,
-    scope: CONFIG.SCOPES,
-    callback: async (resp) => {
-      if (resp.error) { toast("Sign-in failed: " + resp.error, "rust"); return; }
-      state.accessToken = resp.access_token;
-      await afterSignIn();
-    },
-  });
+  let silentAttempt = true;
+state.tokenClient = google.accounts.oauth2.initTokenClient({
+  client_id: CONFIG.CLIENT_ID,
+  scope: CONFIG.SCOPES,
+  callback: async (resp) => {
+    const wasSilent = silentAttempt;
+    silentAttempt = false;
+    if (resp.error) {
+      if (!wasSilent) toast("Sign-in failed: " + resp.error, "rust");
+      return;
+    }
+    state.accessToken = resp.access_token;
+    await afterSignIn();
+  },
+});
+state.tokenClient.requestAccessToken({ prompt: "" });
   $("#btn-signin").addEventListener("click", () => state.tokenClient.requestAccessToken({ prompt: "consent" }));
   $("#btn-signout").addEventListener("click", signOut);
 }
