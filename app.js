@@ -7,7 +7,7 @@
    ========================================================================== */
 
 const CONFIG = {
-  CLIENT_ID: "YOUR_CLIENT_ID.apps.googleusercontent.com", // <-- replace me
+  CLIENT_ID: "733849404197-qhmm284bqi2l4f700h6evctj67maj6lv.apps.googleusercontent.com",
   SCOPES: "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/spreadsheets",
   SHEET_FILE_NAME: "Ledger Data (do not rename)",
 };
