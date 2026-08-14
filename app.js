@@ -8,7 +8,7 @@
 
 const CONFIG = {
   CLIENT_ID: "733849404197-qhmm284bqi2l4f700h6evctj67maj6lv.apps.googleusercontent.com",
-  SCOPES: "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/spreadsheets",
+  SCOPES: "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/spreadsheets openid email profile",
   SHEET_FILE_NAME: "Ledger Data (do not rename)",
 };
 
@@ -278,7 +278,7 @@ function navigate(view, opts={}) {
   $("#view-title").textContent = titles[view] || "";
   const root = $("#view-root");
   root.className = "px-8 py-7 max-w-6xl fade-in";
-  const renderers = { dashboard: renderDashboard, invoice: () => renderInvoice(opts), cashflow: renderCashflow, history: renderHistory, products: renderProducts, settings: renderSettings };
+  const renderers = { dashboard: renderDashboard, invoice: renderInvoice, cashflow: renderCashflow, history: renderHistory, products: renderProducts, settings: renderSettings };
   root.innerHTML = "";
   (renderers[view] || renderDashboard)(root);
 }
