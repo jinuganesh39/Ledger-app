@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ledger — Finance &amp; Invoicing</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,500;8..60,600;8..60,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          ink:   { 950:'#0B1220', 900:'#101B2D', 800:'#16233A', 700:'#223252', 600:'#324569', 500:'#4A5E88', 400:'#7A8CB3', 300:'#AAB7D4', 200:'#D2D9EC', 100:'#E9EDF7', 50:'#F5F7FC' },
+          brass: { 700:'#8A5A22', 600:'#A9702C', 500:'#C4883D', 400:'#D6A55F', 300:'#E4C293', 100:'#F6EBD9', 50:'#FBF6EC' },
+          moss:  { 700:'#2F5D46', 600:'#3C7657', 500:'#4C8E6A', 100:'#E1F0E6' },
+          rust:  { 700:'#8C3A2B', 600:'#AC4A37', 500:'#C25A44', 100:'#F6E1DB' },
+        },
+        fontFamily: {
+          sans: ['Inter','ui-sans-serif','system-ui'],
+          serif: ['"Source Serif 4"','ui-serif','Georgia'],
+          mono: ['"JetBrains Mono"','ui-monospace'],
+        },
+      }
+    }
+  }
+</script>
+<style>
+  html { font-family: 'Inter', sans-serif; }
+  body { background: #F5F7FC; }
+  ::selection { background: #D6A55F55; }
+  .scrollbar-thin::-webkit-scrollbar { width: 6px; height:6px; }
+  .scrollbar-thin::-webkit-scrollbar-thumb { background: #D2D9EC; border-radius: 4px; }
+  .nav-item.active { background: #16233A; color: #F6EBD9; }
+  .nav-item.active .nav-dot { background:#D6A55F; }
+  .field-label { font-size:.72rem; font-weight:600; letter-spacing:.04em; text-transform:uppercase; color:#4A5E88; }
+  input, select, textarea { transition: box-shadow .15s ease, border-color .15s ease; }
+  input:focus, select:focus, textarea:focus { outline:none; box-shadow: 0 0 0 3px #C4883D33; border-color:#C4883D; }
+  .tab-btn.active { border-color:#16233A; color:#16233A; font-weight:600; }
+  .fade-in { animation: fadeIn .25s ease both; }
+  @keyframes fadeIn { from { opacity:0; transform: translateY(4px);} to { opacity:1; transform:none; } }
+  .toast { animation: toastIn .2s ease both, toastOut .25s ease 2.6s forwards; }
+  @keyframes toastIn { from { opacity:0; transform: translateY(8px);} to { opacity:1; transform:none;} }
+  @keyframes toastOut { to { opacity:0; transform: translateY(-6px);} }
+
+  /* Invoice document */
+  #invoice-doc { font-family: 'Source Serif 4', serif; }
+  #invoice-doc .mono { font-family: 'JetBrains Mono', monospace; }
+
+  @media print {
+    body * { visibility: hidden; }
+    #print-root, #print-root * { visibility: visible; }
+    #print-root { position: absolute; top:0; left:0; width:100%; margin:0; padding:0; }
+    .no-print { display:none !important; }
+    #invoice-doc { box-shadow:none !important; border:none !important; }
+  }
+</style>
+</head>
+<body class="text-ink-900">
+
+<!-- ============ LOGIN SCREEN ============ -->
+<div id="login-screen" class="min-h-screen flex items-center justify-center px-6">
+  <div class="max-w-md w-full">
+    <div class="flex items-center gap-2.5 mb-8 justify-center">
+      <div class="w-9 h-9 rounded-md bg-ink-900 flex items-center justify-center">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h16M4 18h10" stroke="#D6A55F" stroke-width="2" stroke-linecap="round"/></svg>
+      </div>
+      <span class="font-serif font-semibold text-xl tracking-tight">Ledger</span>
+    </div>
+    <div class="bg-white border border-ink-100 rounded-2xl shadow-sm p-8 text-center">
+      <h1 class="font-serif text-2xl font-semibold text-ink-900 mb-2">Your books, in your Drive</h1>
+      <p class="text-sm text-ink-500 leading-relaxed mb-7">Ledger keeps every invoice, product and rupee logged straight into a spreadsheet in your own Google Account. No separate server ever sees your data.</p>
+      <button id="btn-signin" class="w-full inline-flex items-center justify-center gap-3 rounded-lg border border-ink-200 bg-white hover:bg-ink-50 px-5 py-3 font-medium text-ink-800 transition">
+        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.6 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6.1 29.6 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 15.9 18.9 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6.1 29.6 4 24 4c-7.6 0-14.2 4.3-17.7 10.7z"/><path fill="#4CAF50" d="M24 44c5.5 0 10.4-1.9 14.3-5.1l-6.6-5.6C29.6 35.1 26.9 36 24 36c-5.3 0-9.6-3.4-11.2-8.1l-6.6 5.1C9.7 39.6 16.3 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.2-4.2 5.6l6.6 5.6C39.9 37.4 44 31.4 44 24c0-1.3-.1-2.7-.4-3.5z"/></svg>
+        Continue with Google
+      </button>
+      <p class="text-xs text-ink-400 mt-4">Requests access only to files Ledger itself creates in your Drive.</p>
+    </div>
+    <div id="config-warning" class="hidden mt-5 text-xs text-rust-700 bg-rust-100 border border-rust-100 rounded-lg p-3.5 leading-relaxed"></div>
+  </div>
+</div>
+
+<!-- ============ ONBOARDING SCREEN ============ -->
+<div id="onboarding-screen" class="hidden min-h-screen py-12 px-6">
+  <div class="max-w-2xl mx-auto">
+    <div class="mb-8">
+      <span class="field-label">Step 1 of 1</span>
+      <h1 class="font-serif text-3xl font-semibold mt-1">Set up your business profile</h1>
+      <p class="text-sm text-ink-500 mt-2">These details are saved once and stamped automatically on every invoice and bill of supply you generate.</p>
+    </div>
+    <form id="form-onboarding" class="bg-white border border-ink-100 rounded-2xl shadow-sm p-7 space-y-6">
+      <div>
+        <h3 class="text-sm font-semibold text-ink-800 mb-3">Business identity</h3>
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div class="sm:col-span-2"><label class="field-label">Business / personal name</label><input required name="businessName" class="mt-1.5 w-full rounded-lg border border-ink-200 px-3 py-2.5 text-sm"></div>
+          <div class="sm:col-span-2"><label class="field-label">Address</label><textarea required name="address" rows="2" class="mt-1.5 w-full rounded-lg border border-ink-200 px-3 py-2.5 text-sm"></textarea></div>
+          <div><label class="field-label">Contact (phone / email)</label><input required name="contact" class="mt-1.5 w-full rounded-lg border border-ink-200 px-3 py-2.5 text-sm"></div>
+          <div><label class="field-label">Home state (for GST)</label><input required name="state" placeholder="e.g. Karnataka" class="mt-1.5 w-full rounded-lg border border-ink-200 px-3 py-2.5 text-sm"></div>
+          <div class="sm:col-span-2"><label class="field-label">GSTIN <span class="normal-case font-normal text-ink-400">(leave blank if unregistered)</span></label><input name="gstin" class="mt-1.5 w-full rounded-lg border border-ink-200 px-3 py-2.5 text-sm uppercase"></div>
+        </div>
+      </div>
+      <div class="border-t border-ink-100 pt-6">
+        <h3 class="text-sm font-semibold text-ink-800 mb-3">Bank account (shown on invoices)</h3>
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div><label class="field-label">Account name</label><input required name="bankAccountName" class="mt-1.5 w-full rounded-lg border border-ink-200 px-3 py-2.5 text-sm"></div>
+          <div><label class="field-label">Account number</label><input required name="bankAccountNumber" class="mt-1.5 w-full rounded-lg border border-ink-200 px-3 py-2.5 text-sm"></div>
+          <div><label class="field-label">Bank name</label><input required name="bankName" class="mt-1.5 w-full rounded-lg border border-ink-200 px-3 py-2.5 text-sm"></div>
+          <div><label class="field-label">IFSC code</label><input required name="ifsc" class="mt-1.5 w-full rounded-lg border border-ink-200 px-3 py-2.5 text-sm uppercase"></div>
+          <div><label class="field-label">Branch</label><input required name="branch" class="mt-1.5 w-full rounded-lg border border-ink-200 px-3 py-2.5 text-sm"></div>
+        </div>
+      </div>
+      <div class="border-t border-ink-100 pt-6">
+        <label class="field-label">Default invoice terms</label>
+        <textarea name="terms" rows="2" class="mt-1.5 w-full rounded-lg border border-ink-200 px-3 py-2.5 text-sm">Payment due within 15 days. Goods once sold will not be taken back.</textarea>
+      </div>
+      <button type="submit" class="w-full rounded-lg bg-ink-900 text-white py-3 font-medium hover:bg-ink-800 transition">Save &amp; create my Ledger spreadsheet</button>
+    </form>
+  </div>
+</div>
+
+<!-- ============ APP SHELL ============ -->
+<div id="app" class="hidden min-h-screen flex">
+  <!-- Sidebar -->
+  <aside class="no-print w-60 shrink-0 bg-ink-900 text-ink-200 flex flex-col">
+    <div class="px-5 py-5 flex items-center gap-2.5 border-b border-white/10">
+      <div class="w-8 h-8 rounded-md bg-white/10 flex items-center justify-center">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h16M4 18h10" stroke="#D6A55F" stroke-width="2" stroke-linecap="round"/></svg>
+      </div>
+      <span class="font-serif font-semibold text-white text-lg">Ledger</span>
+    </div>
+    <nav class="flex-1 px-3 py-4 space-y-1 text-sm">
+      <button data-view="dashboard" class="nav-item w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg hover:bg-white/5 transition"><span class="nav-dot w-1.5 h-1.5 rounded-full bg-ink-500"></span>Dashboard</button>
+      <button data-view="invoice" class="nav-item w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg hover:bg-white/5 transition"><span class="nav-dot w-1.5 h-1.5 rounded-full bg-ink-500"></span>New Invoice</button>
+      <button data-view="cashflow" class="nav-item w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg hover:bg-white/5 transition"><span class="nav-dot w-1.5 h-1.5 rounded-full bg-ink-500"></span>Cash In / Out</button>
+      <button data-view="history" class="nav-item w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg hover:bg-white/5 transition"><span class="nav-dot w-1.5 h-1.5 rounded-full bg-ink-500"></span>History &amp; Export</button>
+      <button data-view="products" class="nav-item w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg hover:bg-white/5 transition"><span class="nav-dot w-1.5 h-1.5 rounded-full bg-ink-500"></span>Catalog</button>
+      <button data-view="settings" class="nav-item w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg hover:bg-white/5 transition"><span class="nav-dot w-1.5 h-1.5 rounded-full bg-ink-500"></span>Business Profile</button>
+    </nav>
+    <div class="px-4 py-4 border-t border-white/10">
+      <div id="sync-indicator" class="flex items-center gap-2 text-xs text-ink-400 mb-3">
+        <span class="w-1.5 h-1.5 rounded-full bg-moss-500"></span><span id="sync-text">Synced to Drive</span>
+      </div>
+      <button id="btn-signout" class="text-xs text-ink-400 hover:text-white transition">Sign out</button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="flex-1 min-w-0">
+    <header class="no-print sticky top-0 z-10 bg-ink-50/90 backdrop-blur border-b border-ink-100 px-8 py-4 flex items-center justify-between">
+      <h1 id="view-title" class="font-serif text-xl font-semibold">Dashboard</h1>
+      <div id="user-chip" class="flex items-center gap-2.5 text-sm text-ink-600"></div>
+    </header>
+    <div id="view-root" class="px-8 py-7 max-w-6xl"></div>
+  </main>
+</div>
+
+<!-- Toast -->
+<div id="toast-root" class="no-print fixed bottom-6 right-6 z-50 space-y-2"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
