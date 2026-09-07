@@ -790,7 +790,7 @@ function renderInvoice(root) {
         <div class="text-right">
           <div class="inline-block text-xs font-semibold tracking-widest uppercase bg-ink-900 text-brass-200 px-3 py-1 rounded">${d.docType==='tax'?'Tax Invoice':'Bill of Supply'}</div>
           <p class="text-sm text-ink-500 mt-2 mono">No: ${previewInvoiceNo()}</p>
-          <p class="text-sm text-ink-500 mt-2">Date: ${d.date}</p>
+         <p class="text-sm text-ink-500 mt-2">Date: ${d.date}</p>
         </div>
       </div>
 
