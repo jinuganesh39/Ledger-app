@@ -655,6 +655,12 @@ function exportJSON(rows) { downloadBlob(JSON.stringify(rows, null, 2), "transac
    ======================================================================== */
 function blankLineItem() { return { productId:"", name:"", hsn:"", qty:1, rate:0, discount:0, gstRate:0 }; }
 
+function nextInvoiceNo(docType) {
+  const prefix = docType === "bos" ? "MBSP" : "MBI";
+  const countOfType = state.invoices.filter(i => i.docType === docType).length;
+  return `${prefix}${String(countOfType+1).padStart(3,"0")}`;
+}
+function previewInvoiceNo() { return nextInvoiceNo(state.invoiceDraft.docType); }
 function renderInvoice(root) {
   if (!state.invoiceDraft) {
     state.invoiceDraft = {
@@ -783,6 +789,7 @@ function renderInvoice(root) {
         </div>
         <div class="text-right">
           <div class="inline-block text-xs font-semibold tracking-widest uppercase bg-ink-900 text-brass-200 px-3 py-1 rounded">${d.docType==='tax'?'Tax Invoice':'Bill of Supply'}</div>
+          <p class="text-sm text-ink-500 mt-2 mono">No: ${previewInvoiceNo()}</p>
           <p class="text-sm text-ink-500 mt-2">Date: ${d.date}</p>
         </div>
       </div>
@@ -864,7 +871,7 @@ async function saveInvoice(root) {
     return { subtotal, disc, cgst, sgst, igst, total: subtotal + cgst+sgst+igst };
   })();
 
-  const invoiceNo = `INV-${String(state.invoices.length+1).padStart(4,"0")}`;
+  const invoiceNo = nextInvoiceNo(d.docType);
   const inv = {
     id: uid(), docType: d.docType, invoiceNo, date: d.date,
     clientName: d.clientName, clientAddress: d.clientAddress, clientGSTIN: d.clientGSTIN, clientState: d.clientState,
